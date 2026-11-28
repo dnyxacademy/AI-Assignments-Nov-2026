@@ -87,3 +87,107 @@ Push the notebook or script to your own repository, open a pull request, then pa
 - [Cross-encoder re-ranking (sentence-transformers)](https://sbert.net/examples/applications/retrieve_rerank/README.html)
 - [BM25 explained](https://en.wikipedia.org/wiki/Okapi_BM25)
 - [RAG against fine-tuning (OpenAI cookbook)](https://cookbook.openai.com/examples/fine-tuned_qa/ft_retrieval_augmented_generation_qdrant)
+
+------------------------------------------------------------------------------
+
+# Week 3 – Assignment 05: RAG Evaluation
+
+## Overview
+
+This assignment evaluates a Retrieval-Augmented Generation (RAG) system using an agriculture-focused knowledge base containing 10 PDF documents.
+
+The evaluation compares different chunk sizes, dense vector retrieval, hybrid retrieval using BM25 and vector search, and cross-encoder reranking.
+
+## Dataset and Configuration
+
+- Source documents: 10 agricultural PDF documents
+- Total baseline chunks: 1,478
+- Embedding model: `all-MiniLM-L6-v2`
+- Embedding dimensions: 384
+- Vector database: ChromaDB
+- Answer generation: Gemini 3.5 Flash Lite
+- Baseline chunk size: 500 characters
+- Chunk overlap: 50 characters
+- Evaluation questions: 15 (13 answerable and 2 unsupported)
+
+## Evaluation Results
+
+### 1. Chunk Size Comparison
+
+| Chunk Size | Total Chunks | Source Recall |
+|---|---:|---:|
+| 200 | 4,420 | 88.46% |
+| 500 | 1,478 | 88.46% |
+| 1,000 | 702 | 88.46% |
+
+All three configurations achieved the same source-level recall. The 500-character configuration was retained as a balance between context size and chunk count.
+
+### 2. Retrieval Strategy Comparison
+
+| Retrieval Method | Source Recall | Average Retrieval Latency |
+|---|---:|---:|
+| Vector-only | 88.46% | Not recorded |
+| Hybrid BM25 + Vector | 92.31% | 0.055 seconds |
+| Vector + Cross-encoder | 92.31% | 2.321 seconds |
+
+Hybrid retrieval combines keyword-based BM25 search and semantic vector search using Reciprocal Rank Fusion (RRF).
+
+The cross-encoder retrieves 20 vector candidates, reranks them, and returns the top 5.
+
+### 3. Answer Quality
+
+Manual evaluation against 15 reference answers:
+
+| Configuration | Answer Quality |
+|---|---:|
+| Vector-only baseline | 63.33% |
+| Hybrid retrieval | 73.33% |
+
+Scoring: 1 for a fully correct answer, 0.5 for a partially correct answer, and 0 for an incorrect answer or an unnecessary refusal.
+
+Cross-encoder answer quality was not evaluated.
+
+### 4. Key Findings
+
+- Hybrid retrieval improved source-level recall from 88.46% to 92.31%.
+- Hybrid answer quality improved from 63.33% to 73.33%.
+- Cross-encoder reranking achieved the same recall as hybrid search but had higher latency.
+- Multi-document questions remained challenging.
+- Unsupported questions were correctly refused.
+
+## Selected Configuration
+
+**Hybrid retrieval using BM25 + vector search with RRF** was selected.
+
+It achieved 92.31% source recall and 73.33% answer quality, with an average retrieval latency of 0.055 seconds in the Colab experiment.
+
+## Prompting vs RAG vs Fine-tuning
+
+- **Prompting:** Controls the model's instructions, response format, and behaviour.
+- **RAG:** Retrieves relevant information from external agricultural documents and provides it as context. This is suitable for knowledge that needs to be updated without retraining the model.
+- **Fine-tuning:** Adapts model behaviour and domain-specific response patterns but requires training data and computational resources.
+
+**Recommendation:** Use RAG with hybrid retrieval and a carefully designed prompt. Consider fine-tuning later if domain-specific response quality remains inadequate.
+
+## Limitations
+
+1. Evaluation was limited to 15 questions and 10 source documents.
+2. Multi-document retrieval still needs improvement.
+3. Answer quality was evaluated manually.
+4. Cross-encoder answer quality was not measured.
+5. Latency measurements were collected in Google Colab.
+6. The system has not been evaluated in a production environment.
+
+## Tools and Technologies
+
+- Python
+- Google Colab
+- Sentence Transformers
+- ChromaDB
+- BM25 (`rank-bm25`)
+- Cross-Encoder
+- Gemini API
+
+## How AI Was Used
+
+AI assistance was used for code guidance, debugging, evaluation design, and documentation. Retrieval experiments and reported results were generated and evaluated using the notebook implementation.
